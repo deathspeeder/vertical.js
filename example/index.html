@@ -1,0 +1,51 @@
+<!doctype html>
+<html class="no-js" lang="">
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>deathspeeder</title>
+
+
+  </head>
+  <body>
+
+    <div class="container" style="width:840px;height:640px;overflow-y:auto;">
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <!-- build:js scripts/main.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.10.3/paper-full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/moment.min.js"></script>
+    <script src="../src/vertical.js"></script>
+    <!-- endbuild -->
+    <script type="text/javascript">
+      $('#canvas').verticalResource({
+        calendar: {
+          start: moment('2017-03-08 11:00:00'),
+          end: moment('2017-03-08 23:00:00')
+        },
+        resources: ['Node01','Node02','Node03','Node04','Node05'],
+        verticals: [
+          {
+            name: "Gray Sort",
+            owner: "jun.wang",
+            shareType: "Exclusive",
+            resources: ['Node01','Node02','Node03'],
+            beginTime: moment('2017-03-08 14:00:00'),
+            endTime: moment('2017-03-08 17:00:00'),
+            services: [
+              {
+                name: "Hadoop 2.7.0"
+              },
+              {
+                name: "Spark 1.5.1"
+              }
+            ]
+          }
+        ]
+      });
+    </script>
+  </body>
+</html>
