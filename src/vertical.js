@@ -43,13 +43,14 @@
 
     var c = this.settings.calendar;
     var hours = moment.duration(c.end.diff(c.start)).asHours();
+    // console.log("hours=" + hours);
     var oneStepMinWidth = Math.ceil(this.lengthOf("XXAM", c.fontStyle)) + c.labelMinMargin;
     // console.log("oneStepMinWidth=" + oneStepMinWidth);
     var maxNumberOfColumns = Math.floor(width / oneStepMinWidth);
     var maxNumberOfSteps = maxNumberOfColumns - 1;
     // console.log("maxNumberOfSteps=" + maxNumberOfSteps);
 
-    var possibleStepHours = [1, 2, 4, 6, 8, 12, 24, 48, 7*24, Number.MAX_SAFE_INTEGER];
+    var possibleStepHours = [1, 2, 4, 6, 8, 12, 24, 48];
     var stepHourIndex = 0;
     for (; stepHourIndex<possibleStepHours.length; stepHourIndex++) {
       var stepsNeeded = Math.ceil(hours / possibleStepHours[stepHourIndex]);
@@ -57,25 +58,37 @@
         break;
       }
     }
-
-    var stepHour = possibleStepHours[stepHourIndex]
+    var stepHour;
+    if (stepHourIndex == possibleStepHours.length) {
+      stepHour = 24 * Math.ceil((hours / maxNumberOfSteps) / 24);
+    } else {
+      stepHour = possibleStepHours[stepHourIndex];
+    }
     var numberOfSteps = Math.ceil(hours / stepHour);
+
+    // console.log("stepHour=" + stepHour);
     // console.log("numberOfSteps=" + numberOfSteps);
     var stepLength = width / (numberOfSteps + 1);
     // console.log("stepLength=" + stepLength);
 
     var startMoment;
     var format = 'ha';
+    var header1Format = 'MMM Do, YYYY';
     if (stepHour % 24 == 0) { // display labels as days
       startMoment = c.start.startOf('day');
       format = 'Do';
+      header1Format = 'MMM YYYY';
+      if (stepHour * numberOfSteps / 24 > 30) {
+        format = 'MMM Do';
+        header1Format = 'YYYY';
+      }
     } else { // display as hour
       startMoment = c.start.startOf('hour');
     }
 
     var m = startMoment.clone();
     var x = stepLength;
-    var y = 2 * c.headerHeight - 3;
+    var y = 2 * c.headerHeight + this.settings.padding - 5;
     for (var i=0; i<numberOfSteps; i++) {
       var text = new paper.PointText();
       text.content = m.format(format);
@@ -86,6 +99,15 @@
       x += stepLength;
       m = m.add(stepHour, 'hour');
     }
+
+    var header1 = new paper.PointText();
+    header1.content = startMoment.clone().add(Math.ceil(hours / 2)).format(header1Format);
+    if (c.fontStyle) {
+      header1.style = c.fontStyle;
+    }
+    header1.style.fontSize = 25;
+    header1.point = new paper.Point(width / 2 + this.settings.padding, y - c.headerHeight);
+
     this.numberOfSteps = numberOfSteps;
     this.stepLength = stepLength;
     this.startMoment = startMoment;
@@ -231,6 +253,54 @@
     return groups;
   }
 
+  /**
+    Draw lines y = x + b
+  */
+  VerticalResource.prototype.fillDownwardDiagonal = function(pathRectangle, color) {
+    // console.log(pathRectangle.bounds);
+    var x = pathRectangle.bounds.x;
+    var y = pathRectangle.bounds.y;
+    var width = pathRectangle.bounds.width;
+    var height = pathRectangle.bounds.height;
+    // (x, y+height) -> (x+width, y)
+    var startB = y + height - x;
+    var endB = y - x - width;
+    var step = 5;
+    var stepB = Math.sqrt(2) * step;
+    function intersect(point) {
+      return point.x >= x && point.x <= x + width &&
+             point.y >= y && point.y <= y + height;
+    }
+    for (var b = startB; b > endB; b -= stepB) {
+      var intersections = [
+        {x: x, y: x + b},
+        {x: x + width, y: x + width + b},
+        {x: y - b, y: y},
+        {x: y + height - b, y: y + height}
+      ];
+
+      var validIntersections = [];
+      for (var i=0; i<intersections.length; i++) {
+        if (intersect(intersections[i])) {
+          validIntersections.push(intersections[i]);
+        }
+      }
+
+      // var intersectionX = intersect(intersectionX1) ? intersectionX1 : intersectionX2;
+      // var intersectionY = intersect(intersectionY1) ? intersectionY1 : intersectionY2;
+
+      if (validIntersections.length > 1) {
+        var line = new paper.Path({
+          segments: [
+            [validIntersections[0].x, validIntersections[0].y],
+            [validIntersections[1].x, validIntersections[1].y]
+          ]
+        });
+        line.strokeColor = color;
+      }
+    }
+  }
+
   VerticalResource.prototype.createVerticals = function() {
     function getRandomColor() {
       var letters = '0123456789ABCDEF';
@@ -245,6 +315,7 @@
     var v = s.verticals;
     for(var i=0; i<v.length; i++) {
       var groups = this.groupResources(v[i].resources);
+      var fillColor = getRandomColor();
       for(var j=0; j<groups.length; j++) {
         var y = s.padding + 2 * s.calendar.headerHeight +
                 s.resources.indexOf(groups[j][0]) * this.rowHeight;
@@ -259,7 +330,12 @@
         var borderRec = new paper.Rectangle(x, y, width, height);
         var cornerSize = new paper.Size(5, 5);
         var recBorder = new paper.Path.Rectangle(borderRec, cornerSize);
-        recBorder.fillColor = getRandomColor();
+        if (v[i].shareType == "Exclusive") {
+          recBorder.fillColor = fillColor;
+        } else {
+          recBorder.strokeColor = fillColor;
+          this.fillDownwardDiagonal(recBorder, fillColor);
+        }
         recBorder.opacity = 0.7;
 
         var text = new paper.PointText();
@@ -268,6 +344,14 @@
           text.style = s.vertical.fontStyle;
         }
         text.point = new paper.Point(x + width / 2, y + height / 2);
+
+        var owner = new paper.PointText();
+        owner.content = v[i].owner;
+        if (s.vertical.fontStyle) {
+          owner.style = s.vertical.fontStyle;
+          owner.style.fontSize -= 3;
+        }
+        owner.point = new paper.Point(x + width / 2, y + height / 2 + owner.style.fontSize);
       }
     }
   };
@@ -286,8 +370,8 @@
             strokeColor: '#D3D3D3',
             headerHeight: 30,
             fontStyle: {
-              fontFamily: 'Courier New',
-              fontWeight: 'light',
+              fontFamily: 'Calibri',
+              fontWeight: 'normal',
               fontSize: 12,
               fillColor: 'black',
               justification: 'center'
@@ -297,9 +381,9 @@
           },
           vertical: {
             fontStyle: {
-              fontFamily: 'Courier New',
+              fontFamily: 'Calibri',
               fontWeight: 'normal',
-              fontSize: 12,
+              fontSize: 15,
               fillColor: 'black',
               justification: 'center'
             }
