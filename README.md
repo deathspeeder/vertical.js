@@ -1,37 +1,78 @@
-## Welcome to GitHub Pages
+## Vertical.js
 
-You can use the [editor on GitHub](https://github.com/deathspeeder/vertical.js/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+vertical.js is a lightweight javascript framework drawing resources allocation hierarchy using HTML5 canvas.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+Example output
 
-### Markdown
+![Example](https://raw.githubusercontent.com/deathspeeder/vertical.js/master/example/index.png)
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+### Setup
 
-```markdown
-Syntax highlighted code block
+vertical.js requires [jQuery](https://jquery.com/), [moment.js](https://momentjs.com) and [paper.js](http://paperjs.org/). Includes them before vertical.js
 
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.10.3/paper-full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/moment.min.js"></script>
+  <script src="src/vertical.js"></script>
+</head>
+<body>
+	<canvas id="myCanvas" resize></canvas>
+</body>
+</html>
 ```
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+### Draw
 
-### Jekyll Themes
+Draw your resources allocation hierarchy with vertical.js
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/deathspeeder/vertical.js/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+```javascript
+$('#myCanvas').verticalResource({
+  calendar: {
+    start: moment('2017-03-08 11:00:00'),
+    end: moment('2017-03-08 23:00:00')
+  },
+  resources: ['Node01','Node02','Node03','Node04','Node05'],
+  verticals: [
+    {
+      name: "Gray Sort",
+      owner: "jun.wang",
+      shareType: "Exclusive",
+      resources: ['Node01','Node02','Node03', 'Node05'],
+      beginTime: moment('2017-03-08 12:00:00'),
+      endTime: moment('2017-03-08 17:00:00'),
+      services: [
+        {
+          name: "Hadoop 2.7.0"
+        },
+        {
+          name: "Spark 1.5.1"
+        }
+      ]
+    },
+    {
+      name: "MySQL",
+      owner: "jun.wang",
+      shareType: "Share",
+      resources: ['Node02','Node03','Node04', 'Node05'],
+      beginTime: moment('2017-03-08 17:00:00'),
+      endTime: moment('2017-03-08 20:00:00'),
+      services: []
+    },
+    {
+      name: "Web",
+      owner: "jun.wang",
+      shareType: "Share",
+      resources: ['Node01','Node02','Node03', 'Node04'],
+      beginTime: moment('2017-03-08 19:00:00'),
+      endTime: moment('2017-03-08 22:00:00'),
+      services: []
+    }
+  ]
+});
+```
 
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+### options
