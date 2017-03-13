@@ -163,7 +163,11 @@
     var resourceNameLength =
       this.lengthOf(longestResourceName, c.fontStyle);
 
+    var minRowHeight = c.fontStyle.fontSize + 2;
     this.rowHeight = (s.height - 2 * s.padding - 2 * c.headerHeight) / r.length;
+    if (this.rowHeight < minRowHeight) {
+      this.rowHeight = minRowHeight;
+    }
     this.rotateResourceLabel = false;
     if (resourceNameLength + c.labelMinMargin > this.stepLength &&
         resourceNameLength + c.labelMinMargin < this.rowHeight) {
@@ -198,6 +202,12 @@
 
       ly += this.rowHeight;
       ry += this.rowHeight;
+    }
+
+    var finalCanvasHeight = ry - this.rowHeight + s.padding;
+    if (finalCanvasHeight > s.height) {
+      $(this.canvas).height(finalCanvasHeight);
+      this.canvas.height = finalCanvasHeight;
     }
 
     // column lines
