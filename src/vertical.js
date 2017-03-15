@@ -28,14 +28,9 @@
   };
 
   VerticalResource.prototype.lengthOf = function(str, style) {
-    var text = new paper.PointText();
-    text.content = str;
-    if (style) {
-        text.style = style;
-    }
     var ctx = this.canvas.getContext('2d');
-    ctx.font = text.fontSize + text.font;
-    return ctx.measureText(text).width;
+    ctx.font = style.fontSize + style.fontFamily;
+    return ctx.measureText(str).width;
   };
 
   VerticalResource.prototype.createHeader = function(width) {
@@ -44,7 +39,13 @@
     var c = this.settings.calendar;
     var hours = moment.duration(c.end.diff(c.start)).asHours();
     // console.log("hours=" + hours);
-    var oneStepMinWidth = Math.ceil(this.lengthOf("XXAM", c.fontStyle)) + c.labelMinMargin;
+    var longestLabel = "XXAM";
+    for (var i=0; i<this.settings.resources.length; i++) {
+      if (this.settings.resources[i].length > longestLabel.length) {
+        longestLabel = this.settings.resources[i];
+      }
+    }
+    var oneStepMinWidth = Math.ceil(this.lengthOf(longestLabel, c.fontStyle)) + c.labelMinMargin;
     // console.log("oneStepMinWidth=" + oneStepMinWidth);
     var maxNumberOfColumns = Math.floor(width / oneStepMinWidth);
     var maxNumberOfSteps = maxNumberOfColumns - 1;
@@ -408,7 +409,7 @@
               fillColor: 'black',
               justification: 'center'
             },
-            labelMinMargin: 20
+            labelMinMargin: 0
 
           },
           vertical: {
