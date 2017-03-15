@@ -339,14 +339,34 @@
         height -= 2 * recPadding;
         var borderRec = new paper.Rectangle(x, y, width, height);
         var cornerSize = new paper.Size(5, 5);
-        var recBorder = new paper.Path.Rectangle(borderRec, cornerSize);
+        var recVertical = new paper.Path.Rectangle(borderRec, cornerSize);
         if (v[i].shareType == "Exclusive") {
-          recBorder.fillColor = fillColor;
+          recVertical.fillColor = fillColor;
         } else {
-          recBorder.strokeColor = fillColor;
-          this.fillDownwardDiagonal(recBorder, fillColor);
+          recVertical.fillColor = 'white';
+          recVertical.strokeColor = fillColor;
+          this.fillDownwardDiagonal(recVertical, fillColor);
         }
-        recBorder.opacity = 0.7;
+        recVertical.opacity = 0.7;
+        recVertical.vertical = v[i];
+
+        if (s.vertical.tooltip.enable) {
+          recVertical.onMouseEnter = function(event) {
+            var tooltip = s.vertical.tooltip.creator(event, s.vertical.fontStyle);
+            tooltip.name = 'tooltip';
+            // Add the tooltip to the parent (group)
+            this.parent.addChild(tooltip);
+          }
+
+          recVertical.onMouseMove = function(event) {
+            this.parent.children['tooltip'].translate(event.delta);
+          }
+
+          recVertical.onMouseLeave = function(event) {
+            // We retrieve the tooltip from its name in the parent node (group) then remove it
+            this.parent.children['tooltip'].remove();
+          }
+        }
 
         var text = new paper.PointText();
         text.content = v[i].name;
@@ -362,6 +382,8 @@
           owner.style.fontSize -= 3;
         }
         owner.point = new paper.Point(x + width / 2, y + height / 2 + owner.style.fontSize);
+
+        recVertical.bringToFront();
       }
     }
   };
@@ -396,6 +418,37 @@
               fontSize: 15,
               fillColor: 'black',
               justification: 'center'
+            },
+            tooltip: {
+              enable: false,
+              creator: function(event, fontStyle) {
+                var vertical = event.currentTarget.vertical;
+                var title = vertical.name;
+                var format = "YYYY-MM-DD HH:mm:ss";
+                var subtitle = vertical.beginTime.format(format) + " ~ " + vertical.endTime.format(format);
+                var width = Math.max(title.length, subtitle.length) * 6;
+                var height = 60;
+                var tooltipGroup = new paper.Group();
+                var tooltipRect = new paper.Rectangle(event.point, new paper.Size(width, height));
+                var tooltip = new paper.Path.Rectangle(tooltipRect, new paper.Size(10, 10));
+                tooltip.fillColor = 'white';
+                tooltip.strokeColor = 'black';
+
+                var textTitle = new paper.PointText();
+                textTitle.content = title;
+                textTitle.style = fontStyle;
+                textTitle.point = new paper.Point(event.point.x + width / 2, event.point.y + height / 2);
+                var textSubtitle = new paper.PointText();
+                textSubtitle.content = subtitle;
+                textSubtitle.style = fontStyle;
+                textSubtitle.style.fontSize -= 3;
+                textSubtitle.point = new paper.Point(event.point.x + width / 2, event.point.y + height / 2 + fontStyle.fontSize);
+
+                tooltipGroup.addChild(tooltip);
+                tooltipGroup.addChild(textTitle);
+                tooltipGroup.addChild(textSubtitle);
+                return tooltipGroup;
+              }
             }
           },
           resources: [],
