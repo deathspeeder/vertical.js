@@ -236,6 +236,28 @@
         [s.padding + calendarWidth, y]
       ]
     });
+
+    if (c.showCurrentTimeline) {
+      this.layerLabel.activate();
+      var diffHours = moment().diff(this.startMoment, 'seconds') / 3600;
+      var lineX = this.stepLength + this.stepLength * diffHours / this.stepHour;
+      var currentTimeline = new paper.Path({
+        segments: [
+          [lineX, s.padding + 2 * s.calendar.headerHeight],
+          [lineX, y]
+        ]
+      });
+      currentTimeline.strokeColor = new paper.Color(0, 1, 0);
+      currentTimeline.strokeWidth = 2;
+
+      var text = new paper.PointText();
+      text.content = "Now";
+      if (c.fontStyle) {
+        text.style = c.fontStyle;
+      }
+      text.style.fontSize -= 2;
+      text.point = new paper.Point(lineX, s.padding + 2 * s.calendar.headerHeight + 2);
+    }
   };
 
   VerticalResource.prototype.groupResources = function(requestedResources) {
@@ -444,8 +466,8 @@
               fillColor: 'black',
               justification: 'center'
             },
-            labelMinMargin: 0
-
+            labelMinMargin: 0,
+            showCurrentTimeline: false
           },
           vertical: {
             fontStyle: {
