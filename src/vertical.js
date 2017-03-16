@@ -323,7 +323,42 @@
     }
     this.layerVertical = new paper.Layer();
     var s = this.settings;
-    var v = s.verticals;
+    var v = s.verticals.sort(function(a, b) {
+      var merge = [];
+      for (var i = 0; i < a.resources.length; i++) {
+        merge.push(a.resources[i]);
+      }
+      for (var i = 0; i < b.resources.length; i++) {
+        merge.push(b.resources[i]);
+      }
+      merge = merge.sort();
+      var duplicate = false;
+      if (merge.length > 0) {
+        for (var i = 1; i < merge.length; i++) {
+          if (merge[i] == merge[i-1]) {
+            duplicate = true;
+            break;
+          }
+        }
+      }
+      var overlap = (a.beginTime.isAfter(b.beginTime) && a.beginTime.isBefore(b.endTime)) ||
+            (a.endTime.isAfter(b.beginTime) && a.endTime.isBefore(b.endTime)) ||
+            (b.beginTime.isAfter(a.beginTime) && b.beginTime.isBefore(a.endTime)) ||
+            (b.endTime.isAfter(a.beginTime) && b.endTime.isBefore(a.endTime));
+
+      // these two verticals will be drawn overlap, to avoid the larger one covers
+      // the smaller one, we make the smaller drawn after larger. That is smaller
+      // one > larger one
+      if (duplicate && overlap) {
+        var areaA = a.resources.length * a.endTime.diff(a.beginTime, 'hours');
+        var areaB = b.resources.length * b.endTime.diff(b.beginTime, 'hours');
+        return areaB - areaA;
+      } else {
+        var ran = Math.random() - 0.5;
+        return ran < 0 ? -1 : 1;
+      }
+    });
+
     for(var i=0; i<v.length; i++) {
       var groups = this.groupResources(v[i].resources);
       var fillColor = getRandomColor();
