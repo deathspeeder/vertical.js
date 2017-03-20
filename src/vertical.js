@@ -289,7 +289,7 @@
   /**
     Draw lines y = x + b
   */
-  VerticalResource.prototype.fillDownwardDiagonal = function(pathRectangle, color) {
+  VerticalResource.prototype.fillDownwardDiagonal = function(pathRectangle, color, dashArray) {
     // console.log(pathRectangle.bounds);
     var x = pathRectangle.bounds.x;
     var y = pathRectangle.bounds.y;
@@ -330,6 +330,10 @@
           ]
         });
         line.strokeColor = color;
+        line.opacity = this.settings.vertical.opacity;
+        if (dashArray) {
+          line.dashArray = dashArray;
+        }
       }
     }
   }
@@ -402,14 +406,19 @@
           recVertical.fillColor = fillColor;
         } else if (v[i].shareType == "Share") {
           recVertical.fillColor = 'white';
-          recVertical.strokeColor = fillColor;
           this.fillDownwardDiagonal(recVertical, fillColor);
         } else {
           recVertical.fillColor = 'white';
-          recVertical.strokeColor = fillColor;
+          this.fillDownwardDiagonal(recVertical, fillColor, s.vertical.dashArray);
         }
-        recVertical.opacity = 0.7;
+        recVertical.strokeColor = fillColor;
+        recVertical.opacity = s.vertical.opacity;
         recVertical.vertical = v[i];
+        recVertical.strokeWidth = 2;
+
+        if (v[i].endTime.isBefore(moment())) {
+          recVertical.dashArray = s.vertical.dashArray;
+        }
 
         if (s.vertical.tooltip.enable) {
           recVertical.onMouseEnter = function(event) {
@@ -444,7 +453,6 @@
         }
         owner.point = new paper.Point(x + width / 2, y + height / 2 + owner.style.fontSize);
 
-        recVertical.bringToFront();
       }
     }
   };
@@ -484,7 +492,7 @@
               enable: false,
               creator: function(event, fontStyle) {
                 var vertical = event.currentTarget.vertical;
-                var title = vertical.name;
+                var title = vertical.name + " (" + vertical.shareType + ")";
                 var format = "YYYY-MM-DD HH:mm:ss";
                 var subtitle = vertical.beginTime.format(format) + " ~ " + vertical.endTime.format(format);
                 var width = Math.max(title.length, subtitle.length) * 6;
@@ -510,7 +518,9 @@
                 tooltipGroup.addChild(textSubtitle);
                 return tooltipGroup;
               }
-            }
+            },
+            opacity: 0.5,
+            dashArray: [10, 4]
           },
           resources: [],
           verticals: []
