@@ -400,10 +400,13 @@
         var recVertical = new paper.Path.Rectangle(borderRec, cornerSize);
         if (v[i].shareType == "Exclusive") {
           recVertical.fillColor = fillColor;
-        } else {
+        } else if (v[i].shareType == "Share") {
           recVertical.fillColor = 'white';
           recVertical.strokeColor = fillColor;
           this.fillDownwardDiagonal(recVertical, fillColor);
+        } else {
+          recVertical.fillColor = 'white';
+          recVertical.strokeColor = fillColor;
         }
         recVertical.opacity = 0.7;
         recVertical.vertical = v[i];
