@@ -207,8 +207,7 @@
 
     var finalCanvasHeight = ry - this.rowHeight + s.padding;
     if (finalCanvasHeight > s.height) {
-      $(this.canvas).height(finalCanvasHeight);
-      this.canvas.height = finalCanvasHeight;
+      paper.view.setViewSize(paper.view.size.width, finalCanvasHeight)
     }
 
     // column lines
