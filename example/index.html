@@ -23,8 +23,9 @@
     <script type="text/javascript">
       $('#canvas').verticalResource({
         calendar: {
-          start: moment('2017-03-08 11:00:00'),
-          end: moment('2017-03-08 23:00:00')
+          start: moment().subtract(1, 'day'),
+          end: moment().add(1, 'day'),
+          showCurrentTimeline: true
         },
         vertical: {
           tooltip: {
@@ -34,12 +35,21 @@
         resources: ['Node01','Node02','Node03','Node04','Node05'],
         verticals: [
           {
-            name: "Gray Sort",
-            owner: "jun.wang",
+            name: "My App",
+            owner: "Jim",
             shareType: "Exclusive",
-            resources: ['Node01','Node02','Node03', 'Node05'],
-            beginTime: moment('2017-03-08 12:00:00'),
-            endTime: moment('2017-03-08 17:00:00'),
+            resources: ['Node01','Node02','Node03'],
+            beginTime: moment().subtract(23, 'hour'),
+            endTime: moment().subtract(8, 'hour'),
+            services: []
+          },
+          {
+            name: "Gray Sort",
+            owner: "Jun Wang",
+            shareType: "Exclusive",
+            resources: ['Node01','Node02','Node03', 'Node04', 'Node05'],
+            beginTime: moment().subtract(7, 'hour'),
+            endTime: moment().add(2, 'hour'),
             services: [
               {
                 name: "Hadoop 2.7.0"
@@ -51,22 +61,31 @@
           },
           {
             name: "MySQL",
-            owner: "jun.wang",
+            owner: "G.A.",
             shareType: "Share",
             resources: ['Node02','Node03','Node04', 'Node05'],
-            beginTime: moment('2017-03-08 17:00:00'),
-            endTime: moment('2017-03-08 20:00:00'),
+            beginTime: moment().add(3, 'hour'),
+            endTime: moment().add(15, 'hour'),
             services: []
           },
           {
             name: "Web",
-            owner: "jun.wang",
+            owner: "Lily",
             shareType: "Negligible",
-            resources: ['Node01','Node02','Node03', 'Node04'],
-            beginTime: moment('2017-03-08 19:00:00'),
-            endTime: moment('2017-03-08 22:00:00'),
+            resources: ['Node05'],
+            beginTime: moment().subtract(20, 'hour'),
+            endTime: moment().add(22, 'hour'),
             services: []
-          }
+          },
+          {
+            name: "Temp",
+            owner: "Admin",
+            shareType: "Share",
+            resources: ['Node01','Node02', 'Node04'],
+            beginTime: moment().add(12, 'hour'),
+            endTime: moment().add(23, 'hour'),
+            services: []
+          },
         ]
       });
     </script>

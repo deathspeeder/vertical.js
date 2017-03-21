@@ -401,6 +401,10 @@
         var borderRec = new paper.Rectangle(x, y, width, height);
         var cornerSize = new paper.Size(5, 5);
         var recVertical = new paper.Path.Rectangle(borderRec, cornerSize);
+        recVertical.strokeColor = fillColor;
+        recVertical.opacity = s.vertical.opacity;
+        recVertical.vertical = v[i];
+        recVertical.strokeWidth = 2;
         if (v[i].shareType == "Exclusive") {
           recVertical.fillColor = fillColor;
         } else if (v[i].shareType == "Share") {
@@ -408,12 +412,8 @@
           this.fillDownwardDiagonal(recVertical, fillColor);
         } else {
           recVertical.fillColor = 'white';
-          this.fillDownwardDiagonal(recVertical, fillColor, s.vertical.dashArray);
+          recVertical.strokeWidth = 1;
         }
-        recVertical.strokeColor = fillColor;
-        recVertical.opacity = s.vertical.opacity;
-        recVertical.vertical = v[i];
-        recVertical.strokeWidth = 2;
 
         if (v[i].endTime.isBefore(moment())) {
           recVertical.dashArray = s.vertical.dashArray;
