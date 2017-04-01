@@ -437,20 +437,26 @@
           }
         }
 
-        var text = new paper.PointText();
-        text.content = v[i].name;
-        if (s.vertical.fontStyle) {
-          text.style = s.vertical.fontStyle;
-        }
-        text.point = new paper.Point(x + width / 2, y + height / 2);
+        var displayName = v[i].name;
+        var displayOwner = v[i].owner.replace(/@.*/, "");
+        var lengthName = this.lengthOf(displayName, s.vertical.fontStyle);
+        var lengthOwner = this.lengthOf(displayOwner, s.vertical.fontStyle);
+        if (Math.max(lengthName, lengthOwner) < width && s.vertical.fontStyle.fontSize * 2 < height) {
+          var text = new paper.PointText();
+          text.content = displayName;
+          if (s.vertical.fontStyle) {
+            text.style = s.vertical.fontStyle;
+          }
+          text.point = new paper.Point(x + width / 2, y + height / 2);
 
-        var owner = new paper.PointText();
-        owner.content = v[i].owner;
-        if (s.vertical.fontStyle) {
-          owner.style = s.vertical.fontStyle;
-          owner.style.fontSize -= 3;
+          var owner = new paper.PointText();
+          owner.content = displayOwner;
+          if (s.vertical.fontStyle) {
+            owner.style = s.vertical.fontStyle;
+            owner.style.fontSize -= 3;
+          }
+          owner.point = new paper.Point(x + width / 2, y + height / 2 + owner.style.fontSize);
         }
-        owner.point = new paper.Point(x + width / 2, y + height / 2 + owner.style.fontSize);
 
       }
     }
@@ -492,29 +498,47 @@
               creator: function(event, fontStyle) {
                 var vertical = event.currentTarget.vertical;
                 var title = vertical.name + " (" + vertical.shareType + ")";
+                var subtitle = vertical.owner
                 var format = "YYYY-MM-DD HH:mm:ss";
-                var subtitle = vertical.beginTime.format(format) + " ~ " + vertical.endTime.format(format);
-                var width = Math.max(title.length, subtitle.length) * 6;
-                var height = 60;
+                var subtitle2 = vertical.beginTime.format(format) + " ~ " + vertical.endTime.format(format);
+                var width =  Math.max(Math.max(title.length, subtitle.length), subtitle2.length) * 7;
+                var height = 80;
+
+                var x = event.point.x;
+                var y = event.point.y;
+                if (x + width > paper.view.size.width) {
+                  x -= width;
+                }
+                if (y + height > paper.view.size.height) {
+                  y -= height;
+                }
+
                 var tooltipGroup = new paper.Group();
-                var tooltipRect = new paper.Rectangle(event.point, new paper.Size(width, height));
+                var tooltipRect = new paper.Rectangle(new paper.Point(x, y), new paper.Size(width, height));
                 var tooltip = new paper.Path.Rectangle(tooltipRect, new paper.Size(10, 10));
                 tooltip.fillColor = 'white';
                 tooltip.strokeColor = 'black';
 
+                var yStart = y + height / 2 - 10;
                 var textTitle = new paper.PointText();
                 textTitle.content = title;
                 textTitle.style = fontStyle;
-                textTitle.point = new paper.Point(event.point.x + width / 2, event.point.y + height / 2);
+                textTitle.point = new paper.Point(x + width / 2, yStart);
                 var textSubtitle = new paper.PointText();
                 textSubtitle.content = subtitle;
                 textSubtitle.style = fontStyle;
                 textSubtitle.style.fontSize -= 3;
-                textSubtitle.point = new paper.Point(event.point.x + width / 2, event.point.y + height / 2 + fontStyle.fontSize);
+                textSubtitle.point = new paper.Point(x + width / 2, yStart + fontStyle.fontSize);
+                var textSubtitle2 = new paper.PointText();
+                textSubtitle2.content = subtitle2;
+                textSubtitle2.style = fontStyle;
+                textSubtitle2.style.fontSize -= 3;
+                textSubtitle2.point = new paper.Point(x + width / 2, yStart + 2*fontStyle.fontSize);
 
                 tooltipGroup.addChild(tooltip);
                 tooltipGroup.addChild(textTitle);
                 tooltipGroup.addChild(textSubtitle);
+                tooltipGroup.addChild(textSubtitle2);
                 return tooltipGroup;
               }
             },
