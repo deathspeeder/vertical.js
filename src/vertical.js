@@ -1,6 +1,11 @@
 (function ( $ ) {
   'use strict';
 
+  // Pure duck-typing implementation taken from Underscore.js.
+  function isFunction(object) {
+    return !!(object && object.constructor && object.call && object.apply);
+  }
+
   function VerticalResource(canvas, settings) {
     var minWidth = 80;
     var minHeight = 60;
@@ -29,9 +34,57 @@
 
   VerticalResource.prototype.lengthOf = function(str, style) {
     var ctx = this.canvas.getContext('2d');
-    ctx.font = style.fontSize + style.fontFamily;
+    ctx.font = style.fontWeight + " " + style.fontSize + "pt " + style.fontFamily;
+    // ctx.font = "bold 12pt arial"
     return ctx.measureText(str).width;
   };
+
+  VerticalResource.prototype.defaultTooltipCreator = function(event, fontStyle) {
+    var vertical = event.currentTarget.vertical;
+    var title = vertical.name + " (" + vertical.shareType + ")";
+    var subtitle = vertical.owner
+    var format = "YYYY-MM-DD HH:mm:ss";
+    var subtitle2 = vertical.beginTime.format(format) + " ~ " + vertical.endTime.format(format);
+    var width =  Math.max(Math.max(title.length, subtitle.length), subtitle2.length) * 7;
+    var height = 80;
+
+    var x = event.point.x;
+    var y = event.point.y;
+    if (x + width > paper.view.size.width) {
+      x -= width;
+    }
+    if (y + height > paper.view.size.height) {
+      y -= height;
+    }
+
+    var tooltipGroup = new paper.Group();
+    var tooltipRect = new paper.Rectangle(new paper.Point(x, y), new paper.Size(width, height));
+    var tooltip = new paper.Path.Rectangle(tooltipRect, new paper.Size(10, 10));
+    tooltip.fillColor = 'white';
+    tooltip.strokeColor = 'black';
+
+    var yStart = y + height / 2 - 10;
+    var textTitle = new paper.PointText();
+    textTitle.content = title;
+    textTitle.style = fontStyle;
+    textTitle.point = new paper.Point(x + width / 2, yStart);
+    var textSubtitle = new paper.PointText();
+    textSubtitle.content = subtitle;
+    textSubtitle.style = fontStyle;
+    textSubtitle.style.fontSize -= 3;
+    textSubtitle.point = new paper.Point(x + width / 2, yStart + fontStyle.fontSize);
+    var textSubtitle2 = new paper.PointText();
+    textSubtitle2.content = subtitle2;
+    textSubtitle2.style = fontStyle;
+    textSubtitle2.style.fontSize -= 3;
+    textSubtitle2.point = new paper.Point(x + width / 2, yStart + 2*fontStyle.fontSize);
+
+    tooltipGroup.addChild(tooltip);
+    tooltipGroup.addChild(textTitle);
+    tooltipGroup.addChild(textSubtitle);
+    tooltipGroup.addChild(textSubtitle2);
+    return tooltipGroup;
+  }
 
   VerticalResource.prototype.createHeader = function(width) {
     this.layerLabel = new paper.Layer();
@@ -420,7 +473,11 @@
         }
 
         if (s.vertical.tooltip.enable) {
+          var defaultCreator = this.defaultTooltipCreator;
           recVertical.onMouseEnter = function(event) {
+            if (!isFunction(s.vertical.tooltip.creator)) {
+              s.vertical.tooltip.creator = defaultCreator;
+            }
             var tooltip = s.vertical.tooltip.creator(event, s.vertical.fontStyle);
             tooltip.name = 'tooltip';
             // Add the tooltip to the parent (group)
@@ -495,52 +552,7 @@
             },
             tooltip: {
               enable: false,
-              creator: function(event, fontStyle) {
-                var vertical = event.currentTarget.vertical;
-                var title = vertical.name + " (" + vertical.shareType + ")";
-                var subtitle = vertical.owner
-                var format = "YYYY-MM-DD HH:mm:ss";
-                var subtitle2 = vertical.beginTime.format(format) + " ~ " + vertical.endTime.format(format);
-                var width =  Math.max(Math.max(title.length, subtitle.length), subtitle2.length) * 7;
-                var height = 80;
-
-                var x = event.point.x;
-                var y = event.point.y;
-                if (x + width > paper.view.size.width) {
-                  x -= width;
-                }
-                if (y + height > paper.view.size.height) {
-                  y -= height;
-                }
-
-                var tooltipGroup = new paper.Group();
-                var tooltipRect = new paper.Rectangle(new paper.Point(x, y), new paper.Size(width, height));
-                var tooltip = new paper.Path.Rectangle(tooltipRect, new paper.Size(10, 10));
-                tooltip.fillColor = 'white';
-                tooltip.strokeColor = 'black';
-
-                var yStart = y + height / 2 - 10;
-                var textTitle = new paper.PointText();
-                textTitle.content = title;
-                textTitle.style = fontStyle;
-                textTitle.point = new paper.Point(x + width / 2, yStart);
-                var textSubtitle = new paper.PointText();
-                textSubtitle.content = subtitle;
-                textSubtitle.style = fontStyle;
-                textSubtitle.style.fontSize -= 3;
-                textSubtitle.point = new paper.Point(x + width / 2, yStart + fontStyle.fontSize);
-                var textSubtitle2 = new paper.PointText();
-                textSubtitle2.content = subtitle2;
-                textSubtitle2.style = fontStyle;
-                textSubtitle2.style.fontSize -= 3;
-                textSubtitle2.point = new paper.Point(x + width / 2, yStart + 2*fontStyle.fontSize);
-
-                tooltipGroup.addChild(tooltip);
-                tooltipGroup.addChild(textTitle);
-                tooltipGroup.addChild(textSubtitle);
-                tooltipGroup.addChild(textSubtitle2);
-                return tooltipGroup;
-              }
+              // creator: function(event, fontStyle) {...}
             },
             opacity: 0.5,
             dashArray: [10, 4]
@@ -566,6 +578,7 @@
 
       var vs = new VerticalResource(canvas, settings);
       vs.draw();
+      return vs;
   };
 
 }( jQuery ));
