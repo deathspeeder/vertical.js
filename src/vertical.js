@@ -19,6 +19,9 @@
     this.settings = settings;
     this.canvas = canvas;
 
+    this.initStart = this.settings.calendar.start.clone();
+    this.initEnd = this.settings.calendar.end.clone();
+
     paper.setup(canvas);
   };
 
@@ -31,6 +34,13 @@
     // this.layerVertical.fillColor = '#e9e9ff';
     paper.view.draw();
   };
+
+  VerticalResource.prototype.setTimeRange = function(start, end) {
+    this.settings.calendar.start = start;
+    this.settings.calendar.end = end;
+    paper.project.clear();
+    this.draw();
+  }
 
   VerticalResource.prototype.lengthOf = function(str, style) {
     var ctx = this.canvas.getContext('2d');
@@ -86,6 +96,37 @@
     return tooltipGroup;
   }
 
+  VerticalResource.prototype.createButton = function(x, y, title, onclick) {
+    this.layerLabel.activate();
+    var width = this.lengthOf(title, this.settings.calendar.fontStyle) + 4;
+    var height = this.settings.calendar.fontStyle.fontSize + 6;
+    var border = new paper.Rectangle(x, y, width, height);
+    var button = new paper.Path.Rectangle(border);
+    button.fillColor = '#f7f7f7';
+    button.name = "button";
+
+    var text = new paper.PointText();
+    text.point = new paper.Point(x + width / 2, y + height / 2 + 2);
+    text.content = title;
+    text.style = this.settings.calendar.fontStyle;
+
+    var group = new paper.Group();
+    group.addChild(button);
+    group.addChild(text);
+    group.onMouseEnter = function(event) {
+      event.target.children['button'].fillColor = '#e6e6e6';
+      document.body.style.cursor = "pointer";
+    };
+    group.onMouseLeave = function(event) {
+      event.target.children['button'].fillColor = '#f7f7f7';
+      document.body.style.cursor = "default";
+    };
+    group.onClick = function(event) {
+      onclick(event);
+    };
+    return group;
+  }
+
   VerticalResource.prototype.createHeader = function(width) {
     this.layerLabel = new paper.Layer();
 
@@ -124,6 +165,7 @@
     // console.log("numberOfSteps=" + numberOfSteps);
     var stepLength = width / (numberOfSteps + 1);
     // console.log("stepLength=" + stepLength);
+    // console.log("width=" + width);
 
     var startMoment;
     var format = 'ha';
@@ -141,8 +183,8 @@
     }
 
     var m = startMoment.clone();
-    var x = stepLength;
-    var y = 2 * c.headerHeight + this.settings.padding - 5;
+    var x = stepLength + this.settings.padding;
+    var y = 2 * c.headerHeight + this.settings.padding;
     for (var i=0; i<numberOfSteps; i++) {
       var text = new paper.PointText();
       text.content = m.format(format);
@@ -162,10 +204,40 @@
     header1.style.fontSize = 25;
     header1.point = new paper.Point(width / 2 + this.settings.padding, y - c.headerHeight);
 
+    if (c.zoomButtons.length > 0) {
+      var bx = this.settings.padding * 2;
+      var by = this.settings.padding + c.fontStyle.fontSize/2 + this.header1HeightOffset;
+      var zoom = new paper.PointText();
+      zoom.content = "Zoom";
+      zoom.style = c.fontStyle;
+      var zoomLength = this.lengthOf(zoom.content, c.fontStyle);
+      zoom.point = new paper.Point(bx + zoomLength/2, by + c.fontStyle.fontSize);
+      bx += zoomLength;
+      for (var i=0; i<c.zoomButtons.length; i++) {
+        var onclick = function(event) {
+          var data = event.target.data;
+          var start = data.start;
+          if (start == null) {
+            start = event.target.vr.initStart;
+          }
+          var end = data.end;
+          if (end == null) {
+            end = event.target.vr.initEnd;
+          }
+          event.target.vr.setTimeRange(start, end);
+        }
+        var group = this.createButton(bx, by, c.zoomButtons[i].title, onclick);
+        group.data = c.zoomButtons[i];
+        group.vr = this;
+        bx += (this.lengthOf(c.zoomButtons[i].title, c.fontStyle) + 8);
+      }
+    }
+
     this.numberOfSteps = numberOfSteps;
     this.stepLength = stepLength;
     this.startMoment = startMoment;
     this.stepHour = stepHour;
+    this.displayLength = width - stepLength;
   };
 
   VerticalResource.prototype.createCalendar = function() {
@@ -183,10 +255,11 @@
     });
     // var outBorderRec = new paper.Rectangle(s.padding, s.padding, calendarWidth, calendarHeight);
     // var recOutBorder = new paper.Path.Rectangle(outBorderRec);
+    this.header1HeightOffset = 15;
     var pathHeader1Line = new paper.Path({
       segments: [
-        [s.padding, s.padding + s.calendar.headerHeight],
-        [s.padding + calendarWidth, s.padding + s.calendar.headerHeight]
+        [s.padding, s.padding + s.calendar.headerHeight + this.header1HeightOffset],
+        [s.padding + calendarWidth, s.padding + s.calendar.headerHeight + this.header1HeightOffset]
       ]
     });
     var pathHeader2Line = new paper.Path({
@@ -231,7 +304,7 @@
     // row lines
     var lx = s.padding + this.stepLength / 2;
     var rx = s.padding;
-    var ly = s.padding + 2 * c.headerHeight + this.rowHeight / 2 + c.fontStyle.fontSize / 2;
+    var ly = s.padding + 2 * c.headerHeight + this.rowHeight / 2 + c.fontStyle.fontSize / 2 - 2;
     var ry = s.padding + 2 * c.headerHeight + this.rowHeight;
     var calendarWidth = s.width - 2 * s.padding;
     for (var i=0; i<r.length; i++) {
@@ -265,7 +338,7 @@
 
     // column lines
     this.layerBorder.activate();
-    var x = this.stepLength;
+    var x = this.stepLength + s.padding;
     var y = ry - this.rowHeight;
     for (var i=0; i<this.numberOfSteps; i++) {
       var columnLine = new paper.Path({
@@ -292,7 +365,7 @@
     if (c.showCurrentTimeline) {
       this.layerLabel.activate();
       var diffHours = moment().diff(this.startMoment, 'seconds') / 3600;
-      var lineX = this.stepLength + this.stepLength * diffHours / this.stepHour;
+      var lineX = s.padding + this.stepLength + this.stepLength * diffHours / this.stepHour;
       var currentTimeline = new paper.Path({
         segments: [
           [lineX, s.padding + 2 * s.calendar.headerHeight],
@@ -444,8 +517,21 @@
         var y = s.padding + 2 * s.calendar.headerHeight +
                 s.resources.indexOf(groups[j][0]) * this.rowHeight;
         var height = groups[j].length * this.rowHeight;
-        var x = this.stepLength * moment.duration(v[i].beginTime.diff(this.startMoment)).asHours() / this.stepHour + this.stepLength;
+        var x = this.stepLength * moment.duration(v[i].beginTime.diff(this.startMoment)).asHours() / this.stepHour + this.stepLength + s.padding;
         var width = this.stepLength * moment.duration(v[i].endTime.diff(v[i].beginTime)).asHours() / this.stepHour;
+        var xmin = this.stepLength + s.padding;
+        if (x < xmin && x + width > xmin) {
+          width -= (xmin - x);
+          x = xmin;
+        } else if (x + width < xmin) {
+          continue;
+        }
+        var xmax = this.displayLength + this.stepLength + s.padding;
+        if (x + width > xmax && x < xmax) {
+          width = xmax - x;
+        } else if (x > xmax) {
+          continue;
+        }
         var recPadding = 1;
         x += recPadding;
         y += recPadding;
@@ -540,7 +626,18 @@
               justification: 'center'
             },
             labelMinMargin: 0,
-            showCurrentTimeline: false
+            showCurrentTimeline: false,
+            zoomButtons: [
+              {
+                title: 'day',
+                start: moment().startOf('day'),
+                end: moment().endOf('day'),
+              },{
+                title: 'all',
+                start: null,
+                end: null,
+              }
+            ]
           },
           vertical: {
             fontStyle: {
