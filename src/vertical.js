@@ -542,7 +542,6 @@
         var recVertical = new paper.Path.Rectangle(borderRec, cornerSize);
         recVertical.strokeColor = fillColor;
         recVertical.opacity = s.vertical.opacity;
-        recVertical.vertical = v[i];
         recVertical.strokeWidth = 2;
         if (v[i].shareType == "Exclusive") {
           recVertical.fillColor = fillColor;
@@ -558,27 +557,9 @@
           recVertical.dashArray = s.vertical.dashArray;
         }
 
-        if (s.vertical.tooltip.enable) {
-          var defaultCreator = this.defaultTooltipCreator;
-          recVertical.onMouseEnter = function(event) {
-            if (!isFunction(s.vertical.tooltip.creator)) {
-              s.vertical.tooltip.creator = defaultCreator;
-            }
-            var tooltip = s.vertical.tooltip.creator(event, s.vertical.fontStyle);
-            tooltip.name = 'tooltip';
-            // Add the tooltip to the parent (group)
-            this.parent.addChild(tooltip);
-          }
-
-          recVertical.onMouseMove = function(event) {
-            this.parent.children['tooltip'].translate(event.delta);
-          }
-
-          recVertical.onMouseLeave = function(event) {
-            // We retrieve the tooltip from its name in the parent node (group) then remove it
-            this.parent.children['tooltip'].remove();
-          }
-        }
+        var group = new paper.Group();
+        group.vertical = v[i];
+        group.addChild(recVertical);
 
         var displayName = v[i].name;
         var displayOwner = v[i].owner.replace(/@.*/, "");
@@ -591,6 +572,7 @@
             text.style = s.vertical.fontStyle;
           }
           text.point = new paper.Point(x + width / 2, y + height / 2);
+          group.addChild(text);
 
           var owner = new paper.PointText();
           owner.content = displayOwner;
@@ -599,6 +581,29 @@
             owner.style.fontSize -= 3;
           }
           owner.point = new paper.Point(x + width / 2, y + height / 2 + owner.style.fontSize);
+          group.addChild(owner);
+        }
+
+        if (s.vertical.tooltip.enable) {
+          var defaultCreator = this.defaultTooltipCreator;
+          group.onMouseEnter = function(event) {
+            if (!isFunction(s.vertical.tooltip.creator)) {
+              s.vertical.tooltip.creator = defaultCreator;
+            }
+            var tooltip = s.vertical.tooltip.creator(event, s.vertical.fontStyle);
+            tooltip.name = 'tooltip';
+            // Add the tooltip to the parent (group)
+            this.parent.addChild(tooltip);
+          }
+
+          group.onMouseMove = function(event) {
+            this.parent.children['tooltip'].translate(event.delta);
+          }
+
+          group.onMouseLeave = function(event) {
+            // We retrieve the tooltip from its name in the parent node (group) then remove it
+            this.parent.children['tooltip'].remove();
+          }
         }
 
       }
