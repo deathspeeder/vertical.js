@@ -414,7 +414,7 @@
   /**
     Draw lines y = x + b
   */
-  VerticalResource.prototype.fillDownwardDiagonal = function(pathRectangle, color, dashArray) {
+  VerticalResource.prototype.fillDownwardDiagonal = function(group, pathRectangle, color, dashArray) {
     // console.log(pathRectangle.bounds);
     var x = pathRectangle.bounds.x;
     var y = pathRectangle.bounds.y;
@@ -459,6 +459,7 @@
         if (dashArray) {
           line.dashArray = dashArray;
         }
+        group.addChild(line);
       }
     }
   }
@@ -540,6 +541,11 @@
         var borderRec = new paper.Rectangle(x, y, width, height);
         var cornerSize = new paper.Size(5, 5);
         var recVertical = new paper.Path.Rectangle(borderRec, cornerSize);
+
+        var group = new paper.Group();
+        group.vertical = v[i];
+        group.addChild(recVertical);
+
         recVertical.strokeColor = fillColor;
         recVertical.opacity = s.vertical.opacity;
         recVertical.strokeWidth = 2;
@@ -547,7 +553,7 @@
           recVertical.fillColor = fillColor;
         } else if (v[i].shareType == "Share") {
           recVertical.fillColor = 'white';
-          this.fillDownwardDiagonal(recVertical, fillColor);
+          this.fillDownwardDiagonal(group, recVertical, fillColor);
         } else {
           recVertical.fillColor = 'white';
           recVertical.strokeWidth = 1;
@@ -556,10 +562,6 @@
         if (v[i].endTime.isBefore(moment())) {
           recVertical.dashArray = s.vertical.dashArray;
         }
-
-        var group = new paper.Group();
-        group.vertical = v[i];
-        group.addChild(recVertical);
 
         var displayName = v[i].name;
         var displayOwner = v[i].owner.replace(/@.*/, "");
