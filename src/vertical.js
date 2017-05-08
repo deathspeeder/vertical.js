@@ -512,6 +512,10 @@
     });
 
     for(var i=0; i<v.length; i++) {
+      var toKeep = s.resources;
+      v[i].resources = v[i].resources.filter( function( el ) {
+        return toKeep.indexOf( el ) >= 0;
+      } );
       var groups = this.groupResources(v[i].resources);
       var fillColor = getRandomColor();
       for(var j=0; j<groups.length; j++) {
