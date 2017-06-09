@@ -620,17 +620,21 @@
     }
   };
   VerticalResource.prototype.resize = function(width, height) {
-    var context = this.canvas.getContext("2d");
-    context.clearRect(0, 0, context.width,context.height);
-    context.beginPath();
+    paper.project.clear();
+    paper.view.update();
 
-    this.settings.width = width;
-    this.settings.height = height;
-    $(this.canvas).width(width);
-    $(this.canvas).height(height);
+    if (width !== undefined) {
+      this.settings.width = width;
+    }
+    if (height !== undefined) {
+      this.settings.height = height;
+    }
+    $(this.canvas).width(this.settings.width);
+    $(this.canvas).height(this.settings.height);
 
     this.init(this.canvas, this.settings);
     this.draw();
+
   }
 
   $.fn.verticalResource = function( options ) {
