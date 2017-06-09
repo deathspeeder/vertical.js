@@ -7,6 +7,10 @@
   }
 
   function VerticalResource(canvas, settings) {
+    this.init(canvas, settings);
+  };
+
+  VerticalResource.prototype.init = function(canvas, settings) {
     var minWidth = 80;
     var minHeight = 60;
 
@@ -23,7 +27,7 @@
     this.initEnd = this.settings.calendar.end.clone();
 
     paper.setup(canvas);
-  };
+  }
 
   VerticalResource.prototype.draw = function() {
     this.createCalendar();
@@ -615,6 +619,19 @@
       }
     }
   };
+  VerticalResource.prototype.resize = function(width, height) {
+    var context = this.canvas.getContext("2d");
+    context.clearRect(0, 0, context.width,context.height);
+    context.beginPath();
+
+    this.settings.width = width;
+    this.settings.height = height;
+    $(this.canvas).width(width);
+    $(this.canvas).height(height);
+
+    this.init(this.canvas, this.settings);
+    this.draw();
+  }
 
   $.fn.verticalResource = function( options ) {
 
